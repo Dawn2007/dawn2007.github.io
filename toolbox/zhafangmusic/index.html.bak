@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炸房音乐制作器</title>
+    <style>
+        :root {
+            --primary-color: #ff4757;
+            --secondary-color: #2ed573;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: white;
+            text-align: center;
+        }
+
+        body {
+            background-image: url('https://dailybing.com/api/v1');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-4px);
+        }
+
+        h1 {
+            margin: 0 0 1.5rem;
+            font-size: 2.2em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .file-input {
+            position: relative;
+            margin: 1.5rem 0;
+        }
+
+        .file-input input {
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-input label {
+            display: block;
+            padding: 1rem 2rem;
+            background: var(--primary-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input label:hover {
+            background: #ff6b81;
+            transform: scale(1.05);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--secondary-color);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: #26af60;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background: #57606f;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎛️ 炸房音乐制作器</h1>
+        
+        <div class="file-input">
+            <input type="file" id="audioFile" accept="audio/*">
+            <label for="audioFile">📁 选择音频文件</label>
+        </div>
+
+        <div class="controls">
+            <button onclick="playAudio()" id="playBtn">▶ 播放</button>
+            <button onclick="stopAudio()" id="stopBtn">⏹ 停止</button>
+            <button onclick="saveAudio()" id="saveBtn">💾 保存</button>
+        </div>
+
+        <div class="status" id="status">
+            🎧 等待文件上传...
+        </div>
+
+        <footer>
+            🖼️ 背景来自每日必应壁纸 | 🛠️ 本页面由 DeepSeek 生成
+        </footer>
+    </div>
+
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        let audioContext;
+        let source;
+        let audioBuffer;
+        let isPlaying = false;
+
+        // 元素引用
+        const statusElement = document.getElementById('status');
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const processingOverlay = document.getElementById('processingOverlay');
+
+        async function processAudio() {
+            const fileInput = document.getElementById('audioFile');
+            if (!fileInput.files.length) return;
+
+            showProcessing();
+            statusElement.textContent = '🔄 正在处理音频文件...';
+
+            try {
+                const file = fileInput.files[0];
+                const arrayBuffer = await file.arrayBuffer();
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                statusElement.textContent = '✅ 音频已就绪！点击播放试听效果';
+                updateButtonStates(true);
+            } catch (error) {
+                statusElement.textContent = '❌ 文件处理失败：' + error.message;
+            } finally {
+                hideProcessing();
+            }
+        }
+
+        function playAudio() {
+            if (!audioBuffer || isPlaying) return;
+
+            source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+
+            // 音频处理链
+            const distortion = createDistortion(400);
+            const lowPass = createLowPassFilter(1000);
+            
+            source.connect(lowPass)
+               .connect(distortion)
+               .connect(audioContext.destination);
+
+            source.start(0);
+            source.onended = () => {
+                isPlaying = false;
+                updateButtonStates(true);
+            };
+
+            isPlaying = true;
+            updateButtonStates();
+            statusElement.textContent = '🎶 正在播放处理后的音频...';
+        }
+
+        function stopAudio() {
+            if (source && isPlaying) {
+                source.stop();
+                isPlaying = false;
+                updateButtonStates(true);
+                statusElement.textContent = '⏹ 播放已停止';
+            }
+        }
+
+        async function saveAudio() {
+            if (!audioBuffer) return;
+
+            showProcessing();
+            statusElement.textContent = '📦 正在生成音频文件...';
+
+            try {
+                // 使用独立的 OfflineAudioContext
+                const offlineContext = new OfflineAudioContext(
+                    audioBuffer.numberOfChannels,
+                    audioBuffer.length,
+                    audioBuffer.sampleRate
+                );
+
+                const offlineSource = offlineContext.createBufferSource();
+                offlineSource.buffer = audioBuffer;
+
+                // 在 OfflineAudioContext 中重新创建效果链
+                const distortion = offlineContext.createWaveShaper();
+                distortion.curve = makeDistortionCurve(400);
+                distortion.oversample = '4x';
+
+                const lowPass = offlineContext.createBiquadFilter();
+                lowPass.type = 'lowpass';
+                lowPass.frequency.value = 1000;
+
+                offlineSource.connect(lowPass)
+                   .connect(distortion)
+                   .connect(offlineContext.destination);
+
+                offlineSource.start(0);
+                const renderedBuffer = await offlineContext.startRendering();
+
+                // 创建下载链接
+                const blob = new Blob([bufferToWav(renderedBuffer)], { type: 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `炸房音乐_${Date.now()}.wav`;
+                a.click();
+                
+                statusElement.textContent = '✅ 文件已保存！';
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                statusElement.textContent = '❌ 保存失败：' + error.message;
+            } finally {
+                hideProcessing();
+            }
+        }
+
+        // 工具函数
+        function createDistortion(amount) {
+            const distortion = audioContext.createWaveShaper();
+            distortion.curve = makeDistortionCurve(amount);
+            distortion.oversample = '4x';
+            return distortion;
+        }
+
+        function createLowPassFilter(freq) {
+            const filter = audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = freq;
+            return filter;
+        }
+
+        function makeDistortionCurve(amount) {
+            const curve = new Float32Array(44100);
+            const deg = Math.PI / 180;
+            for (let i = 0; i < 44100; i++) {
+                const x = (i * 2) / 44100 - 1;
+                curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+            }
+            return curve;
+        }
+
+        function bufferToWav(buffer) {
+            const numOfChan = buffer.numberOfChannels;
+            const length = buffer.length * numOfChan * 2 + 44;
+            const bufferData = new ArrayBuffer(length);
+            const view = new DataView(bufferData);
+            const channels = [];
+            let offset = 0;
+            let pos = 0;
+
+            // 写入WAV头部
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8); // 文件长度
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt "
+            setUint32(16); // 子块大小
+            setUint16(1); // PCM格式
+            setUint16(numOfChan);
+            setUint32(buffer.sampleRate);
+            setUint32(buffer.sampleRate * 2 * numOfChan);
+            setUint16(numOfChan * 2);
+            setUint16(16); // 位深
+            setUint32(0x61746164); // "data"
+            setUint32(length - pos - 4);
+
+            // 写入音频数据
+            for (let i = 0; i < buffer.numberOfChannels; i++) {
+                channels.push(buffer.getChannelData(i));
+            }
+
+            while (pos < length) {
+                for (let i = 0; i < numOfChan; i++) {
+                    const sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    view.setInt16(pos, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return bufferData;
+
+            function setUint16(data) {
+                view.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(pos, data, true);
+                pos += 4;
+            }
+        }
+
+        function updateButtonStates(enable = false) {
+            playBtn.disabled = !enable;
+            stopBtn.disabled = !isPlaying;
+            saveBtn.disabled = !enable;
+        }
+
+        function showProcessing() {
+            processingOverlay.style.display = 'flex';
+        }
+
+        function hideProcessing() {
+            processingOverlay.style.display = 'none';
+        }
+
+        // 事件监听
+        document.getElementById('audioFile').addEventListener('change', processAudio);
+    </script>
+</body>
+</html>

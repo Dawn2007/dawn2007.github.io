@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dawn2007的工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f5f6f7;
+        }
+
+        .title-bar {
+            background: #2d3e50;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 100;
+        }
+
+        .title-bar h1 {
+            color: #fff;
+            font-size: 1.6rem;
+            font-weight: 500;
+            text-align: center;
+            margin: 0;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .tool-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+            transition: all 0.25s ease;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+
+        .tool-card a {
+            display: block;
+            padding: 2rem;
+            text-decoration: none;
+            color: #333;
+            text-align: center;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .tool-card a:active {
+            background: rgba(0,0,0,0.02);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin: 1.5rem auto;
+            }
+
+            .tool-card {
+                border-radius: 8px;
+            }
+
+            .tool-card a {
+                padding: 1.5rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="title-bar">
+        <h1>Dawn2007的工具箱</h1>
+    </header>
+
+    <main class="container">
+        <article class="tool-card">
+            <a href="./zhafangmusic">
+                炸房音乐生成器
+            </a>
+        </article>
+        <article class="tool-card">
+            <a href="">
+                
+            </a>
+        </article>
+        </article>
+        <article class="tool-card">
+            <a href="">
+                
+            </a>
+        </article>
+        </article>
+        <article class="tool-card">
+            <a href="">
+                
+            </a>
+        </article>
+    </main>
+    <p>音乐解锁由于加载较慢，已移除<br>加入了<br>本页面所有工具均为Deepseek编写</p>
+</body>
+</html>
